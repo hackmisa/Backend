@@ -50,3 +50,75 @@ function tweeted(err, data, response) {
 		console.log("it worked");
 	}
 }
+
+
+#!/usr/bin/nodejs
+var PythonShell = require('python-shell');
+var express = require('express');
+var bodyParser = require('body-parser')
+var contentDisposition = require('content-disposition')
+var destroy = require('destroy')
+var child_process = require('child_process')
+var onFinished = require('on-finished')
+var fs = require('fs')
+var path = require('path');
+//var http = require('http').Server(app);
+var fileUpload = require('express-fileupload');
+var app = express();
+app.use(bodyParser.urlencoded({ extended: false }));
+
+// -------------- express initialization -------------- //
+
+// Here, we set the port (these settings are specific to our site)
+app.set('port', process.env.PORT || 8080);
+app.use(fileUpload());
+
+
+function getTags(url){
+    const spawn = require("child_process").spawn;
+    const pyFile = 'c.py';
+    const args = [url];
+    args.unshift(pyFile);
+    
+    const pyspawn = spawn('python2', args);
+    pyspawn.stdout.on('data', (data) => {
+        console.log(`stdout: ${data}`);
+        res.send(data)
+    });
+    
+    pyspawn.stderr.on('data', (data) => {
+        console.log(`stderr: ${data}`);
+        res.send(data)
+    });
+
+}
+
+var listener = app.listen(app.get('port'), function() {
+  console.log("server running")
+  console.log( 'Express server started on port: '+listener.address().port );
+});
+
+app.get('/', function(req, res){
+  res.sendFile(__dirname + '/index.html');
+});
+
+
+var tweetListener = app.post('/getTags', function(req, res){
+    url = req.body.url;
+
+    // construct complete file path
+    
+    
+    getTags(url)
+    /*fs.writeFile(image_file_path, vessel, function (err) {
+          if (err){
+              res.send("couldnt save file")
+          }
+          console.log('Saved!' + beforeName.toString());
+          
+        });*/
+    //justSendSomething(res)  
+    
+    //res.send("maybe success");
+});
+
