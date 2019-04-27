@@ -20,9 +20,19 @@ stream.on("tweet", function(tweet) {
 	if (tweet.entities.media && tweet.entities.media.type == "photo") {
 		imgurl = tweet.entities.media.media_url;
 	}
+	console.log(tweet.place.bounding_box.coordinates);
 
 	if (tweet.geo == null) {
+		console.log("Tweet doesn't have geo :(");
+		return;
 	}
+
+	if (tweet.quoted_status_permalink == undefined) {
+		console.log("no url :(");
+		console.log(tweet);
+		return;
+	}
+
 	var obj = {
 		coordinates: tweet.geo,
 		url: tweet.quoted_status_permalink.url,
@@ -32,8 +42,10 @@ stream.on("tweet", function(tweet) {
 	};
 	// console.log(tweet);
 	sendTweet(obj);
+	console.log("success");
 });
 
+function sendTweet(obj) {}
 // T.get("search/tweets", params, gotData);
 //tweet url = quoted_status_permalink.url
 function gotData(err, data, resp) {
@@ -51,74 +63,69 @@ function tweeted(err, data, response) {
 	}
 }
 
-
-#!/usr/bin/nodejs
-var PythonShell = require('python-shell');
-var express = require('express');
-var bodyParser = require('body-parser')
-var contentDisposition = require('content-disposition')
-var destroy = require('destroy')
-var child_process = require('child_process')
-var onFinished = require('on-finished')
-var fs = require('fs')
-var path = require('path');
+// #!/usr/bin/nodejs
+var PythonShell = require("python-shell");
+var express = require("express");
+var bodyParser = require("body-parser");
+var contentDisposition = require("content-disposition");
+var destroy = require("destroy");
+var child_process = require("child_process");
+var onFinished = require("on-finished");
+var fs = require("fs");
+var path = require("path");
 //var http = require('http').Server(app);
-var fileUpload = require('express-fileupload');
+var fileUpload = require("express-fileupload");
 var app = express();
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({extended: false}));
 
 // -------------- express initialization -------------- //
 
 // Here, we set the port (these settings are specific to our site)
-app.set('port', process.env.PORT || 8080);
+app.set("port", process.env.PORT || 8080);
 app.use(fileUpload());
 
+function getTags(url) {
+	const spawn = require("child_process").spawn;
+	const pyFile = "c.py";
+	const args = [url];
+	args.unshift(pyFile);
 
-function getTags(url){
-    const spawn = require("child_process").spawn;
-    const pyFile = 'c.py';
-    const args = [url];
-    args.unshift(pyFile);
-    
-    const pyspawn = spawn('python2', args);
-    pyspawn.stdout.on('data', (data) => {
-        console.log(`stdout: ${data}`);
-        res.send(data)
-    });
-    
-    pyspawn.stderr.on('data', (data) => {
-        console.log(`stderr: ${data}`);
-        res.send(data)
-    });
+	const pyspawn = spawn("python2", args);
+	pyspawn.stdout.on("data", (data) => {
+		console.log(`stdout: ${data}`);
+		// res.send(data);
+		return data;
+	});
 
+	pyspawn.stderr.on("data", (data) => {
+		console.log(`stderr: ${data}`);
+		// res.send(data);
+	});
 }
 
-var listener = app.listen(app.get('port'), function() {
-  console.log("server running")
-  console.log( 'Express server started on port: '+listener.address().port );
+var listener = app.listen(app.get("port"), function() {
+	console.log("server running");
+	console.log("Express server started on port: " + listener.address().port);
 });
 
-app.get('/', function(req, res){
-  res.sendFile(__dirname + '/index.html');
+app.get("/", function(req, res) {
+	res.sendFile(__dirname + "/index.html");
 });
 
+var tweetListener = app.post("/getTags", function(req, res) {
+	url = req.body.url;
 
-var tweetListener = app.post('/getTags', function(req, res){
-    url = req.body.url;
+	// construct complete file path
 
-    // construct complete file path
-    
-    
-    getTags(url)
-    /*fs.writeFile(image_file_path, vessel, function (err) {
+	getTags(url);
+	/*fs.writeFile(image_file_path, vessel, function (err) {
           if (err){
               res.send("couldnt save file")
           }
           console.log('Saved!' + beforeName.toString());
           
         });*/
-    //justSendSomething(res)  
-    
-    //res.send("maybe success");
-});
+	//justSendSomething(res)
 
+	//res.send("maybe success");
+});

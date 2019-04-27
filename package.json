@@ -1,0 +1,24 @@
+{
+  "name": "misabackend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "twitter.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hackmisa/Backend.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hackmisa/Backend/issues"
+  },
+  "homepage": "https://github.com/hackmisa/Backend#readme",
+  "dependencies": {
+    "express": "^4.16.4",
+    "express-fileupload": "^1.1.4",
+    "python-shell": "^1.0.7"
+  }
+}
