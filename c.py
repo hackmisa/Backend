@@ -12,10 +12,19 @@ response = response["outputs"][0]["data"]["concepts"]
 
 print (type(response))
 res = " "
+flood = 0
+fire = 0
+earthQuake = 0
 for d in response:
-	res += d["name"] + " "
+	cur = d["name"].lower().trim()
+	if cur == "flood":
+		flood = 1
+	elif cur == "fire":
+		fire = 1
+	elif cur == "earthquake":
+		earthQuake = 1
 
 
-
+res = str(flood) + " " + str(fire) + " " + str(earthQuake)
 
 print (res)

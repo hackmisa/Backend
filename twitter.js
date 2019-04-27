@@ -2,6 +2,12 @@ var Twit = require("twit");
 var config = require("./config");
 var T = new Twit(config);
 
+var floodMap = new Map();
+var fireMap = new Map();
+var earthQuakeMap = new Map();
+var irrelevantMap = new Map();
+
+
 var params = {
 	q: "flood",
 	count: 10
@@ -20,22 +26,39 @@ stream.on("tweet", function(tweet) {
 	if (tweet.entities.media && tweet.entities.media.type == "photo") {
 		imgurl = tweet.entities.media.media_url;
 	}
-	console.log(tweet.place.bounding_box.coordinates);
 
-	if (tweet.geo == null) {
-		console.log("Tweet doesn't have geo :(");
-		return;
+	var point = [];
+	if (tweet.geo) {
+		point = tweet.geo.coordinates;
+		console.log("using geo: " + point);
+		// return;
+	} else if (tweet.place) {
+		//try place
+		var cords = tweet.place.bounding_box.coordinates[0];
+		// console.log(cords);
+		var area =
+			Math.abs(cords[2][0] - cords[0][0]) *
+			Math.abs(cords[2][1] - cords[0][1]);
+		if (area > 0.2) {
+			console.log("too big buddy: " + cords);
+			// return;
+			point[1] = -97.741845 + Math.random() * 0.07;
+			point[0] = 30.270299 + Math.random() * 0.07;
+		}
+		point[1] = 0.5 * (cords[2][0] + cords[0][0]);
+		point[0] = 0.5 * (cords[2][1] + cords[0][1]);
+		console.log("using place: " + point);
 	}
 
-	if (tweet.quoted_status_permalink == undefined) {
-		console.log("no url :(");
-		console.log(tweet);
-		return;
-	}
+	var tweeturl =
+		"https://twitter.com/" +
+		tweet.user.screen_name +
+		"/status/" +
+		tweet.id_str;
 
 	var obj = {
-		coordinates: tweet.geo,
-		url: tweet.quoted_status_permalink.url,
+		coordinates: point,
+		url: tweeturl,
 		imageUrl: imgurl,
 		text: tweet.text,
 		user: tweet.user.screen_name
@@ -43,9 +66,14 @@ stream.on("tweet", function(tweet) {
 	// console.log(tweet);
 	sendTweet(obj);
 	console.log("success");
+	console.log(obj);
 });
 
-function sendTweet(obj) {}
+
+function sendTweet(obj) {
+	getTags(obj.url, obj.coordinates);
+}
+
 // T.get("search/tweets", params, gotData);
 //tweet url = quoted_status_permalink.url
 function gotData(err, data, resp) {
@@ -84,16 +112,33 @@ app.use(bodyParser.urlencoded({extended: false}));
 app.set("port", process.env.PORT || 8080);
 app.use(fileUpload());
 
-function getTags(url) {
+function getTags(url, location) {
 	const spawn = require("child_process").spawn;
 	const pyFile = "c.py";
 	const args = [url];
 	args.unshift(pyFile);
-
+	
 	const pyspawn = spawn("python2", args);
 	pyspawn.stdout.on("data", (data) => {
 		console.log(`stdout: ${data}`);
 		// res.send(data);
+		var array = data.split(" ")
+		var relevant = false;
+		if(array[0] == "1"){
+			floodMap.set(location, url)
+			relevant = true;
+		}
+		if(array[1] == "1"){
+			fireMap.set(location, url)
+			relevant = true;
+		}
+		if(array[2] == "1"){
+			earthQuakeMap.set(location, url);
+			relevant = true;
+		}
+		if(relevant == false){
+			irrelevantMap.set(location, url)
+		}
 		return data;
 	});
 
