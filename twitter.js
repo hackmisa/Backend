@@ -25,13 +25,14 @@ stream.on("tweet", function(tweet) {
 	// console.log(tweet);
 	var imgurl;
 	if (tweet.entities.media && tweet.entities.media.type == "photo") {
+		console.log("here\n");
 		imgurl = tweet.entities.media.media_url;
 	}
 
 	var point = [];
 	if (tweet.geo) {
 		point = tweet.geo.coordinates;
-		console.log("using geo: " + point);
+		//console.log("using geo: " + point);
 		// return;
 	} else if (tweet.place) {
 		//try place
@@ -41,14 +42,14 @@ stream.on("tweet", function(tweet) {
 			Math.abs(cords[2][0] - cords[0][0]) *
 			Math.abs(cords[2][1] - cords[0][1]);
 		if (area > 0.2) {
-			console.log("too big buddy: " + cords);
+			//console.log("too big buddy: " + cords);
 			// return;
 			point[1] = -97.741845 + Math.random() * 0.07;
 			point[0] = 30.270299 + Math.random() * 0.07;
 		}
 		point[1] = 0.5 * (cords[2][0] + cords[0][0]);
 		point[0] = 0.5 * (cords[2][1] + cords[0][1]);
-		console.log("using place: " + point);
+		//console.log("using place: " + point);
 	}
 
 	var tweeturl =
