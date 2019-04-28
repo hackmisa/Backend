@@ -19,6 +19,7 @@ var sanFrancisco = ["-122.75", "36.8", "-121.75", "37.8"];
 var austin = ["-97.852871", "30.216850", "-97.640237", "30.351449"];
 
 var stream = T.stream("statuses/filter", {locations: austin});
+var obj = null;
 
 stream.on("tweet", function(tweet) {
 	// console.log(tweet);
@@ -56,22 +57,32 @@ stream.on("tweet", function(tweet) {
 		"/status/" +
 		tweet.id_str;
 
-	var obj = {
+	obj = {
 		coordinates: point,
 		url: tweeturl,
 		imageUrl: imgurl,
 		text: tweet.text,
-		user: tweet.user.screen_name
+		user: tweet.user.screen_name,
+		tags: null
 	};
 	// console.log(tweet);
 	sendTweet(obj);
+	
 	console.log("success");
 	console.log(obj);
 });
 
+didStuff = false;
+
 
 function sendTweet(obj) {
-	getTags(obj.url, obj.coordinates);
+	if(obj.imageUrl == undefined){
+		return;
+	}
+	obj.tags = getTags(obj);
+	didStuff = true;
+	//socket.emit("markers", obj)
+
 }
 
 // T.get("search/tweets", params, gotData);
@@ -103,21 +114,41 @@ var fs = require("fs");
 var path = require("path");
 //var http = require('http').Server(app);
 var fileUpload = require("express-fileupload");
+
 var app = express();
-app.use(bodyParser.urlencoded({extended: false}));
+var server = require('http').Server(app);
+var io = require('socket.io')(server);
+
+io.on('connection', function (socket){
+	var tweets = setInterval(function (){
+		getTweet(function (tweet) {
+			if(didStuff){
+				socket.volatile.emit("markers", obj)
+				didStuff = false;
+			}
+		});
+	}, 100);
+
+	socket.on('disconnect', function(){
+		clearInterval(tweets)
+	});
+});
+
 
 // -------------- express initialization -------------- //
 
 // Here, we set the port (these settings are specific to our site)
-app.set("port", process.env.PORT || 8080);
-app.use(fileUpload());
+server.listen(8080)
+app.set("port", process.env.PORT || 8081);
 
-function getTags(url, location) {
+function getTags(obj) {
+	var url = obj.imageUrl;
+	var location = obj.coordinates;
 	const spawn = require("child_process").spawn;
 	const pyFile = "c.py";
 	const args = [url];
 	args.unshift(pyFile);
-	
+
 	const pyspawn = spawn("python2", args);
 	pyspawn.stdout.on("data", (data) => {
 		console.log(`stdout: ${data}`);
@@ -126,20 +157,27 @@ function getTags(url, location) {
 		var relevant = false;
 		if(array[0] == "1"){
 			floodMap.set(location, url)
+			
 			relevant = true;
+			return "flood"
 		}
 		if(array[1] == "1"){
 			fireMap.set(location, url)
+			
 			relevant = true;
+			return "fire"
 		}
 		if(array[2] == "1"){
 			earthQuakeMap.set(location, url);
+			
 			relevant = true;
+			return "earthquake"
 		}
 		if(relevant == false){
 			irrelevantMap.set(location, url)
+			return "none"
 		}
-		return data;
+		
 	});
 
 	pyspawn.stderr.on("data", (data) => {
@@ -157,20 +195,23 @@ app.get("/", function(req, res) {
 	res.sendFile(__dirname + "/index.html");
 });
 
-var tweetListener = app.post("/getTags", function(req, res) {
-	url = req.body.url;
+/*var tweetListener = app.post("/update", function(req, res) {
 
-	// construct complete file path
 
-	getTags(url);
-	/*fs.writeFile(image_file_path, vessel, function (err) {
-          if (err){
-              res.send("couldnt save file")
-          }
-          console.log('Saved!' + beforeName.toString());
-          
-        });*/
-	//justSendSomething(res)
+	if(req == "flood"){
+		res.send(JSON.stringify(floodMap));
+	}
+	else if(req == "fire"){
+		res.send(JSON.stringify(fireMap));
+	}
+	else if(req == "earthquake"){
+		res.send(JSON.stringify(earthQuakeMap));
+	}
+	else{
+
+	}
+	//getTags(url);
+	
 
 	//res.send("maybe success");
-});
+});*/
