@@ -16,8 +16,7 @@ flood = 0
 fire = 0
 earthQuake = 0
 for d in response:
-	cur = d["name"].lower().trim()
-	if cur == "flood":
+	if (cur := d["name"].lower().trim()) == "flood":
 		flood = 1
 	elif cur == "fire":
 		fire = 1
